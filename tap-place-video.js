@@ -112,7 +112,10 @@
       var diff = target - currentGroup.rotation.y;
       while (diff >  Math.PI) diff -= 2 * Math.PI;
       while (diff < -Math.PI) diff += 2 * Math.PI;
-      currentGroup.rotation.y += diff * 0.06; // 낮을수록 더 부드럽고 느리게 따라감
+      // 0.03rad(약 1.7도) 미만 미세 흔들림은 무시
+      if (Math.abs(diff) > 0.03) {
+        currentGroup.rotation.y += diff * 0.06;
+      }
     }
     requestAnimationFrame(tick);
   }
