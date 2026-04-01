@@ -74,7 +74,7 @@
     }
 
     var pw = 2.5;
-    var ph = pw * (9 / 16);
+    var ph = pw * (12 / 16);
 
     var mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(pw, ph),
@@ -84,12 +84,15 @@
     // → 핀치로 스케일 키워도 하단은 바닥에 고정, 위로만 늘어남
     mesh.position.y = ph / 2;
 
+    // 이전 스케일 유지 (핀치로 키운 크기 그대로)
+    var keepScale = currentGroup ? currentGroup.scale.x : 1;
+
     currentGroup = new THREE.Group();
-    // 그룹은 바닥 위 살짝에 배치
     currentGroup.position.set(hitPos.x, hitPos.y + 0.02, hitPos.z);
+    currentGroup.scale.set(keepScale, keepScale, keepScale);
     currentGroup.add(mesh);
     root.add(currentGroup);
-    initialScale = 1;
+    initialScale = keepScale;
 
     // 영상 재생 (소리 포함 → 실패 시 음소거)
     videoEl.muted = false;
