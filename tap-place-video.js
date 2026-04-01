@@ -76,7 +76,7 @@
       currentGroup = null;
     }
 
-    var pw = 8;
+    var pw = 13;
     var ph = pw * (12 / 16);
 
     var mesh = new THREE.Mesh(
@@ -100,14 +100,19 @@
     });
   }
 
-  // ── 매 프레임: Y축만 회전해 카메라 바라보기 (사람 기울어짐 방지) ──
+  // ── 매 프레임: Y축 lerp 회전 (급격한 변화 완화 → 안정화) ────
   var camPos = new THREE.Vector3();
   function tick() {
     if (currentGroup && sceneEl && sceneEl.camera) {
       sceneEl.camera.getWorldPosition(camPos);
       var dx = camPos.x - currentGroup.position.x;
       var dz = camPos.z - currentGroup.position.z;
-      currentGroup.rotation.y = Math.atan2(dx, dz);
+      var target = Math.atan2(dx, dz);
+      // 각도 차이를 -PI~PI 범위로 정규화 후 lerp
+      var diff = target - currentGroup.rotation.y;
+      while (diff >  Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      currentGroup.rotation.y += diff * 0.06; // 낮을수록 더 부드럽고 느리게 따라감
     }
     requestAnimationFrame(tick);
   }
