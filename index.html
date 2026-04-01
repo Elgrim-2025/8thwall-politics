@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>AR Tap to Place Video</title>
 
-  <!-- xr.js 안에 AFRAME + XR8 + xrweb 포함 -->
+  <!-- 1. A-Frame 먼저 로드 (AFRAME 전역 정의) -->
+  <script src="https://cdn.8thwall.com/web/aframe/8frame-1.5.0.min.js"></script>
+  <!-- 2. 8thwall XR 런타임 (AFRAME 있으면 xrweb 등록) -->
   <script src="./external/xr/xr.js" data-preload-chunks="slam"></script>
-  <!-- 크로마키 셰이더 (xr.js / AFRAME 이후 로드) -->
-  <script src="//unpkg.com/aframe-chromakey-material@1.1.4/dist/aframe-chromakey-material.min.js"></script>
-  <!-- 커스텀 AR 로직 -->
+  <!-- 3. 크로마키 셰이더 (AFRAME + xr.js 이후 로드) -->
+  <script src="https://unpkg.com/aframe-chromakey-material@1.1.4/dist/aframe-chromakey-material.min.js"></script>
+  <!-- 4. 커스텀 AR 로직 -->
   <script src="./tap-place-video.js"></script>
 
   <meta name="8thwall:renderer" content="aframe:1.5.0"/>
