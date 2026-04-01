@@ -17,17 +17,32 @@
     '}'
   ].join('\n');
 
+  // HSV 기반 크로마키: RGB 거리보다 녹색 계열 판별 정확도 높음
   var FRAG = [
     'uniform sampler2D map;',
     'uniform vec3  keyColor;',
-    'uniform float similarity;',   // 0~1, 클수록 더 많은 픽셀 제거
-    'uniform float smoothness;',   // 경계 부드럽기
+    'uniform float similarity;',
+    'uniform float smoothness;',
     'varying vec2 vUv;',
+    // RGB → HSV 변환
+    'vec3 rgb2hsv(vec3 c){',
+    '  vec4 K=vec4(0.0,-1.0/3.0,2.0/3.0,-1.0);',
+    '  vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));',
+    '  vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));',
+    '  float d=q.x-min(q.w,q.y);',
+    '  float e=1.0e-10;',
+    '  return vec3(abs(q.z+(q.w-q.y)/(6.0*d+e)),d/(q.x+e),q.x);',
+    '}',
     'void main(){',
     '  vec4 c = texture2D(map, vUv);',
-    '  float diff = distance(c.rgb, keyColor);',
+    '  vec3 kHSV = rgb2hsv(keyColor);',
+    '  vec3 pHSV = rgb2hsv(c.rgb);',
+    '  float hDiff = abs(pHSV.x - kHSV.x);',
+    '  if(hDiff > 0.5) hDiff = 1.0 - hDiff;',
+    // 채도 낮으면 배경 아닐 가능성 높음 (스필 보정)
+    '  float chromaDist = hDiff * 2.0 + (1.0 - pHSV.y) * 0.5;',
     '  float alpha = smoothstep(similarity - smoothness,',
-    '                            similarity + smoothness, diff);',
+    '                            similarity + smoothness, chromaDist);',
     '  if(alpha < 0.01) discard;',
     '  gl_FragColor = vec4(c.rgb, alpha);',
     '}'
@@ -41,8 +56,8 @@
       uniforms: {
         map:        { value: tex },
         keyColor:   { value: new THREE.Color(0x00FF00) },
-        similarity: { value: 0.35 },
-        smoothness: { value: 0.10 }
+        similarity: { value: 0.55 },   // 높을수록 더 세게 따냄
+        smoothness: { value: 0.05 }    // 낮을수록 경계 선명
       },
       vertexShader:   VERT,
       fragmentShader: FRAG,
@@ -79,9 +94,13 @@
       new THREE.PlaneGeometry(pw, ph),
       makeChromakeyMaterial()
     );
+    // 메시 중심을 위로 올려 하단이 그룹 원점(바닥)에 오도록
+    // → 핀치로 스케일 키워도 하단은 바닥에 고정, 위로만 늘어남
+    mesh.position.y = ph / 2;
 
     currentGroup = new THREE.Group();
-    currentGroup.position.set(hitPos.x, hitPos.y + ph / 2 + 0.05, hitPos.z);
+    // 그룹은 바닥 위 살짝에 배치
+    currentGroup.position.set(hitPos.x, hitPos.y + 0.02, hitPos.z);
     currentGroup.add(mesh);
     root.add(currentGroup);
     initialScale = 1;
@@ -94,12 +113,14 @@
     });
   }
 
-  // ── 매 프레임: 카메라 바라보기 ────────────────────────────
+  // ── 매 프레임: Y축만 회전해 카메라 바라보기 (사람 기울어짐 방지) ──
   var camPos = new THREE.Vector3();
   function tick() {
     if (currentGroup && sceneEl && sceneEl.camera) {
       sceneEl.camera.getWorldPosition(camPos);
-      currentGroup.lookAt(camPos);
+      var dx = camPos.x - currentGroup.position.x;
+      var dz = camPos.z - currentGroup.position.z;
+      currentGroup.rotation.y = Math.atan2(dx, dz);
     }
     requestAnimationFrame(tick);
   }
