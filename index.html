@@ -16,7 +16,7 @@
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { overflow: hidden; }
+    html, body { background: #000; overflow: hidden; }
     .over {
       z-index: 10;
       pointer-events: none;
@@ -37,11 +37,20 @@
       padding: 6px 16px;
       border-radius: 20px;
     }
+    #loadingText {
+      top: 50%;
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1em;
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>
   <div class="over">
-    <span id="promptText">화면을 탭해서 배치</span>
+    <span id="loadingText">AR 로딩 중...</span>
+    <span id="promptText" style="display:none">화면을 탭해서 배치</span>
   </div>
 
   <a-scene

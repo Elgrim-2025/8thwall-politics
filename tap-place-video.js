@@ -13,7 +13,7 @@
 
   // ── 영상 배치 ──────────────────────────────────────────────
   function placeVideo(position) {
-    if (prompt) prompt.style.display = 'none';
+    if (prompt) prompt.style.display = 'none';  // 탭 후 안내문구 숨김
 
     // 기존 엔티티 제거
     if (currentEntity && currentEntity.parentNode) {
@@ -101,6 +101,11 @@
     }
 
     function attachListeners() {
+      // 로딩 완료 → UI 전환
+      var loadingText = document.getElementById('loadingText');
+      if (loadingText) loadingText.style.display = 'none';
+      if (prompt) prompt.style.display = '';
+
       ground.addEventListener('click', function (e) {
         // 핀치 중에는 탭 무시
         if (pinchActive) return;
