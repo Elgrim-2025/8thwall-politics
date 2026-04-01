@@ -1,95 +1,130 @@
-AFRAME.registerComponent('tap-place-video', {
-  init() {
-    this.currentEntity = null;
-    this.prompt = document.getElementById('promptText');
-    this.videoEl = document.getElementById('chromaVideo');
+// AFRAME 컴포넌트 없이 순수 이벤트 방식으로 구현
+// xr.js (async)가 AFRAME을 정의한 뒤 a-scene이 초기화되므로
+// scene 'loaded' 이벤트를 기다린 후 로직 연결
 
-    this.pinchActive = false;
-    this.initialPinchDistance = 0;
-    this.initialScale = 1;
+(function () {
+  var currentEntity = null;
+  var videoEl = null;
+  var prompt = null;
 
-    // 지면 클릭 → 영상 배치 (하나씩만)
-    const ground = document.getElementById('ground');
-    ground.addEventListener('click', (e) => {
-      // 두 손가락 핀치 중이면 tap 무시
-      if (this.pinchActive) return;
-      this.placeVideo(e.detail.intersection.point);
-    });
+  var pinchActive = false;
+  var initialPinchDist = 0;
+  var initialScale = 1;
 
-    this.setupPinch();
-  },
-
-  placeVideo(position) {
-    if (this.prompt) this.prompt.style.display = 'none';
+  // ── 영상 배치 ──────────────────────────────────────────────
+  function placeVideo(position) {
+    if (prompt) prompt.style.display = 'none';
 
     // 기존 엔티티 제거
-    if (this.currentEntity) {
-      this.currentEntity.parentNode.removeChild(this.currentEntity);
-      this.currentEntity = null;
+    if (currentEntity && currentEntity.parentNode) {
+      currentEntity.parentNode.removeChild(currentEntity);
     }
+    currentEntity = null;
 
-    // 영상 비율 16:9, 폭 2m
-    const planeW = 2;
-    const planeH = planeW * (9 / 16);
+    var planeW = 2;          // 가로 2m
+    var planeH = planeW * (9 / 16);  // 16:9
 
-    const entity = document.createElement('a-entity');
+    var entity = document.createElement('a-entity');
     entity.setAttribute('position', {
       x: position.x,
-      y: position.y + planeH / 2 + 0.02,  // 바닥에서 살짝 띄움
+      y: position.y + planeH / 2 + 0.02,
       z: position.z,
     });
 
-    // 크로마키 영상 플레인
-    const plane = document.createElement('a-plane');
+    var plane = document.createElement('a-plane');
     plane.setAttribute('width', planeW);
     plane.setAttribute('height', planeH);
-    plane.setAttribute('material', `shader:chromakey; src:#chromaVideo; color:#00FF00; transparent:true`);
+    // 크로마키: 초록색(#00FF00) 배경 제거
+    plane.setAttribute('material',
+      'shader:chromakey; src:#chromaVideo; color:#00FF00; transparent:true');
     plane.setAttribute('shadow', 'receive:false');
 
     entity.appendChild(plane);
-    this.el.sceneEl.appendChild(entity);
-    this.currentEntity = entity;
 
-    // 자동재생 + 소리 허용 (탭 = 사용자 제스처)
-    this.videoEl.muted = false;
-    this.videoEl.play().catch(() => {
-      // 소리 안되면 음소거 후 재시도
-      this.videoEl.muted = true;
-      this.videoEl.play().catch((err) => console.warn('Video play error:', err));
+    var scene = document.querySelector('a-scene');
+    scene.appendChild(entity);
+    currentEntity = entity;
+
+    // 탭(사용자 제스처) 후 소리 포함 재생 시도
+    videoEl.muted = false;
+    videoEl.play().catch(function () {
+      videoEl.muted = true;
+      videoEl.play().catch(function (err) {
+        console.warn('Video play error:', err);
+      });
     });
-  },
+  }
 
-  setupPinch() {
-    const onTouchStart = (e) => {
-      if (e.touches.length === 2 && this.currentEntity) {
-        this.pinchActive = true;
-        this.initialPinchDistance = this.getTouchDist(e.touches);
-        this.initialScale = this.currentEntity.object3D.scale.x;
-      }
-    };
-
-    const onTouchMove = (e) => {
-      if (!this.pinchActive || e.touches.length < 2 || !this.currentEntity) return;
-      const dist = this.getTouchDist(e.touches);
-      const ratio = dist / this.initialPinchDistance;
-      const s = Math.max(0.1, Math.min(10, this.initialScale * ratio));
-      this.currentEntity.object3D.scale.set(s, s, s);
-    };
-
-    const onTouchEnd = (e) => {
-      if (e.touches.length < 2) {
-        this.pinchActive = false;
-      }
-    };
-
-    document.addEventListener('touchstart', onTouchStart, {passive: true});
-    document.addEventListener('touchmove', onTouchMove, {passive: true});
-    document.addEventListener('touchend', onTouchEnd, {passive: true});
-  },
-
-  getTouchDist(touches) {
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
+  // ── 핀치 줌 ────────────────────────────────────────────────
+  function getTouchDist(touches) {
+    var dx = touches[0].clientX - touches[1].clientX;
+    var dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
-  },
-});
+  }
+
+  function onTouchStart(e) {
+    if (e.touches.length === 2 && currentEntity) {
+      pinchActive = true;
+      initialPinchDist = getTouchDist(e.touches);
+      var s = currentEntity.object3D ? currentEntity.object3D.scale.x : 1;
+      initialScale = s;
+    }
+  }
+
+  function onTouchMove(e) {
+    if (!pinchActive || e.touches.length < 2 || !currentEntity) return;
+    var dist = getTouchDist(e.touches);
+    var ratio = dist / initialPinchDist;
+    var s = Math.max(0.1, Math.min(10, initialScale * ratio));
+    if (currentEntity.object3D) {
+      currentEntity.object3D.scale.set(s, s, s);
+    }
+  }
+
+  function onTouchEnd(e) {
+    if (e.touches.length < 2) {
+      pinchActive = false;
+    }
+  }
+
+  // ── 초기화: scene loaded 이후 연결 ─────────────────────────
+  function setupScene() {
+    var scene = document.querySelector('a-scene');
+    var ground = document.getElementById('ground');
+    prompt  = document.getElementById('promptText');
+    videoEl = document.getElementById('chromaVideo');
+
+    if (!scene || !ground || !videoEl) {
+      // 요소가 아직 없으면 잠시 후 재시도
+      setTimeout(setupScene, 100);
+      return;
+    }
+
+    function attachListeners() {
+      ground.addEventListener('click', function (e) {
+        // 핀치 중에는 탭 무시
+        if (pinchActive) return;
+        if (e.detail && e.detail.intersection && e.detail.intersection.point) {
+          placeVideo(e.detail.intersection.point);
+        }
+      });
+
+      document.addEventListener('touchstart', onTouchStart, {passive: true});
+      document.addEventListener('touchmove',  onTouchMove,  {passive: true});
+      document.addEventListener('touchend',   onTouchEnd,   {passive: true});
+    }
+
+    if (scene.hasLoaded) {
+      attachListeners();
+    } else {
+      scene.addEventListener('loaded', attachListeners, {once: true});
+    }
+  }
+
+  // DOM 파싱이 끝난 후 시작
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupScene);
+  } else {
+    setupScene();
+  }
+})();

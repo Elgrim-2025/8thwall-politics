@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>AR Tap to Place Video</title>
 
-  <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
-  <script crossorigin="anonymous" src="./external/xrextras/xrextras.js"></script>
-  <script crossorigin="anonymous" src="./external/landing-page/landing-page.js"></script>
-  <script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="slam"></script>
-  <script crossorigin="anonymous" src="//unpkg.com/aframe-chromakey-material@1.1.4/dist/aframe-chromakey-material.min.js"></script>
+  <!-- xr.js 안에 AFRAME + XR8 + xrweb 포함 -->
+  <script src="./external/xr/xr.js" data-preload-chunks="slam"></script>
+  <!-- 크로마키 셰이더 (xr.js / AFRAME 이후 로드) -->
+  <script src="//unpkg.com/aframe-chromakey-material@1.1.4/dist/aframe-chromakey-material.min.js"></script>
+  <!-- 커스텀 AR 로직 -->
   <script src="./tap-place-video.js"></script>
 
   <meta name="8thwall:renderer" content="aframe:1.5.0"/>
-  <meta name="8thwall:package" content="@8thwall.xrextras"/>
-  <meta name="8thwall:package" content="@8thwall.landing-page"/>
 
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; }
     .over {
       z-index: 10;
       pointer-events: none;
@@ -24,28 +24,27 @@
       top: 0; left: 0; bottom: 0; right: 0;
       text-align: center;
       color: white;
-      font-family: 'Nunito', monospace;
-      text-shadow: 0px 0px 5px black;
+      font-family: monospace;
+      text-shadow: 0 0 6px black;
     }
     #promptText {
-      font-size: 2em;
+      font-size: 1.8em;
       bottom: 12vh;
       position: absolute;
       left: 50%;
       transform: translate(-50%, 0);
+      background: rgba(0,0,0,0.4);
+      padding: 6px 16px;
+      border-radius: 20px;
     }
   </style>
 </head>
 <body>
   <div class="over">
-    <span id="promptText">Tap To Place</span>
+    <span id="promptText">화면을 탭해서 배치</span>
   </div>
 
   <a-scene
-    tap-place-video
-    landing-page
-    xrextras-loading
-    xrextras-runtime-error
     renderer="colorManagement:true"
     xrweb="allowedDevices:any">
 
@@ -53,12 +52,13 @@
       <video
         id="chromaVideo"
         src="assets/example-final.mp4"
-        autoplay
         loop
+        muted
         playsinline
         webkit-playsinline
         crossorigin="anonymous"
-        preload="auto">
+        preload="auto"
+        style="display:none">
       </video>
     </a-assets>
 
@@ -70,21 +70,20 @@
     </a-camera>
 
     <a-entity
-      light="type:directional; intensity:0.8; castShadow:true; shadowMapHeight:2048; shadowMapWidth:2048; shadowCameraTop:40; shadowCameraBottom:-40; shadowCameraRight:40; shadowCameraLeft:-40; target:#camera"
-      xrextras-attach="target:camera; offset:8 15 4"
-      position="1 4.3 2.5">
+      light="type:directional; intensity:0.8; castShadow:true"
+      position="5 10 5">
     </a-entity>
 
     <a-light type="ambient" intensity="0.5"></a-light>
 
-    <!-- 보이지 않는 지면 - 터치 감지용 -->
+    <!-- 보이지 않는 지면: AR 지면 탭 감지 -->
     <a-box
       id="ground"
       class="cantap"
       scale="1000 2 1000"
       position="0 -0.99 0"
       material="shader:flat; transparent:true; opacity:0.0"
-      shadow>
+      visible="true">
     </a-box>
 
   </a-scene>
