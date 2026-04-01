@@ -77,7 +77,7 @@
     }
 
     var pw = 13;
-    var ph = pw * (12 / 16);
+    var ph = pw * (14 / 16);
 
     var mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(pw, ph),
@@ -112,9 +112,11 @@
       var diff = target - currentGroup.rotation.y;
       while (diff >  Math.PI) diff -= 2 * Math.PI;
       while (diff < -Math.PI) diff += 2 * Math.PI;
-      // 0.03rad(약 1.7도) 미만 미세 흔들림은 무시
+      // 0.03rad 미만 미세 흔들림 무시, 프레임당 최대 0.02rad(약 1도)로 클램프
       if (Math.abs(diff) > 0.03) {
-        currentGroup.rotation.y += diff * 0.06;
+        var step = diff * 0.06;
+        var maxStep = 0.02;
+        currentGroup.rotation.y += Math.max(-maxStep, Math.min(maxStep, step));
       }
     }
     requestAnimationFrame(tick);
