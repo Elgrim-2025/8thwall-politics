@@ -17,33 +17,18 @@
     '}'
   ].join('\n');
 
-  // HSV 기반 크로마키: RGB 거리보다 녹색 계열 판별 정확도 높음
+  // 단순 RGB 거리 기반 크로마키 (안정적)
   var FRAG = [
     'uniform sampler2D map;',
     'uniform vec3  keyColor;',
     'uniform float similarity;',
     'uniform float smoothness;',
     'varying vec2 vUv;',
-    // RGB → HSV 변환
-    'vec3 rgb2hsv(vec3 c){',
-    '  vec4 K=vec4(0.0,-1.0/3.0,2.0/3.0,-1.0);',
-    '  vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));',
-    '  vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));',
-    '  float d=q.x-min(q.w,q.y);',
-    '  float e=1.0e-10;',
-    '  return vec3(abs(q.z+(q.w-q.y)/(6.0*d+e)),d/(q.x+e),q.x);',
-    '}',
     'void main(){',
     '  vec4 c = texture2D(map, vUv);',
-    '  vec3 kHSV = rgb2hsv(keyColor);',
-    '  vec3 pHSV = rgb2hsv(c.rgb);',
-    '  float hDiff = abs(pHSV.x - kHSV.x);',
-    '  if(hDiff > 0.5) hDiff = 1.0 - hDiff;',
-    // 채도 낮으면 배경 아닐 가능성 높음 (스필 보정)
-    '  float chromaDist = hDiff * 2.0 + (1.0 - pHSV.y) * 0.5;',
-    '  float alpha = smoothstep(similarity - smoothness,',
-    '                            similarity + smoothness, chromaDist);',
-    '  if(alpha < 0.01) discard;',
+    '  float d = distance(c.rgb, keyColor);',
+    '  float alpha = smoothstep(similarity - smoothness, similarity + smoothness, d);',
+    '  if(alpha < 0.05) discard;',
     '  gl_FragColor = vec4(c.rgb, alpha);',
     '}'
   ].join('\n');
@@ -56,12 +41,13 @@
       uniforms: {
         map:        { value: tex },
         keyColor:   { value: new THREE.Color(0x00FF00) },
-        similarity: { value: 0.55 },   // 높을수록 더 세게 따냄
-        smoothness: { value: 0.05 }    // 낮을수록 경계 선명
+        similarity: { value: 0.80 },   // 0~1.7, 높을수록 더 많이 제거
+        smoothness: { value: 0.10 }
       },
       vertexShader:   VERT,
       fragmentShader: FRAG,
       transparent: true,
+      depthTest:   false,   // ground box에 가리지 않도록
       depthWrite:  false,
       side: THREE.DoubleSide
     });
