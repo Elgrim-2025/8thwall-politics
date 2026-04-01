@@ -8,7 +8,7 @@
   var initialPinchDist  = 0;
   var initialScale      = 1;
 
-  // ── 크로마키 GLSL 셰이더 ──────────────────────────────────
+  // ── 크로마키 GLSL 셰이더 ─
   var VERT = [
     'varying vec2 vUv;',
     'void main(){',
@@ -17,7 +17,7 @@
     '}'
   ].join('\n');
 
-  // 단순 RGB 거리 기반 크로마키 (안정적)
+  // 단순 RGB 거리 기반 크로마키
   var FRAG = [
     'uniform sampler2D map;',
     'uniform vec3  keyColor;',
@@ -53,7 +53,7 @@
     });
   }
 
-  // ── 영상 플레인 배치 ──────────────────────────────────────
+  // ── 영상 플레인 배치 ─
   function placeVideo(hitPos) {
     if (prompt) prompt.style.display = 'none';
 
@@ -100,7 +100,7 @@
     });
   }
 
-  // ── 매 프레임: Y축 lerp 회전 (급격한 변화 완화 → 안정화) ────
+  // ── 매 프레임: Y축 lerp 회전
   var camPos = new THREE.Vector3();
   function tick() {
     if (currentGroup && sceneEl && sceneEl.camera) {
@@ -122,7 +122,7 @@
     requestAnimationFrame(tick);
   }
 
-  // ── 핀치 줌 ───────────────────────────────────────────────
+  // ── 핀치 줌 ─
   function dist2(t) {
     var dx = t[0].clientX - t[1].clientX;
     var dy = t[0].clientY - t[1].clientY;
@@ -144,7 +144,7 @@
     if (e.touches.length < 2) pinchActive = false;
   }
 
-  // ── 초기화 ────────────────────────────────────────────────
+  // ── 초기화 ───
   function setup() {
     sceneEl = document.querySelector('a-scene');
     videoEl = document.getElementById('chromaVideo');
