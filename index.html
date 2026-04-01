@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AR Tap to Place Video</title>
+
+  <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
+  <script crossorigin="anonymous" src="./external/xrextras/xrextras.js"></script>
+  <script crossorigin="anonymous" src="./external/landing-page/landing-page.js"></script>
+  <script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="slam"></script>
+  <script crossorigin="anonymous" src="//unpkg.com/aframe-chromakey-material@1.1.4/dist/aframe-chromakey-material.min.js"></script>
+  <script src="./tap-place-video.js"></script>
+
+  <meta name="8thwall:renderer" content="aframe:1.5.0"/>
+  <meta name="8thwall:package" content="@8thwall.xrextras"/>
+  <meta name="8thwall:package" content="@8thwall.landing-page"/>
+
+  <style>
+    .over {
+      z-index: 10;
+      pointer-events: none;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      text-align: center;
+      color: white;
+      font-family: 'Nunito', monospace;
+      text-shadow: 0px 0px 5px black;
+    }
+    #promptText {
+      font-size: 2em;
+      bottom: 12vh;
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 0);
+    }
+  </style>
+</head>
+<body>
+  <div class="over">
+    <span id="promptText">Tap To Place</span>
+  </div>
+
+  <a-scene
+    tap-place-video
+    landing-page
+    xrextras-loading
+    xrextras-runtime-error
+    renderer="colorManagement:true"
+    xrweb="allowedDevices:any">
+
+    <a-assets>
+      <video
+        id="chromaVideo"
+        src="assets/example-final.mp4"
+        autoplay
+        loop
+        playsinline
+        webkit-playsinline
+        crossorigin="anonymous"
+        preload="auto">
+      </video>
+    </a-assets>
+
+    <a-camera
+      id="camera"
+      position="0 8 8"
+      raycaster="objects: .cantap"
+      cursor="fuse:false; rayOrigin:mouse">
+    </a-camera>
+
+    <a-entity
+      light="type:directional; intensity:0.8; castShadow:true; shadowMapHeight:2048; shadowMapWidth:2048; shadowCameraTop:40; shadowCameraBottom:-40; shadowCameraRight:40; shadowCameraLeft:-40; target:#camera"
+      xrextras-attach="target:camera; offset:8 15 4"
+      position="1 4.3 2.5">
+    </a-entity>
+
+    <a-light type="ambient" intensity="0.5"></a-light>
+
+    <!-- 보이지 않는 지면 - 터치 감지용 -->
+    <a-box
+      id="ground"
+      class="cantap"
+      scale="1000 2 1000"
+      position="0 -0.99 0"
+      material="shader:flat; transparent:true; opacity:0.0"
+      shadow>
+    </a-box>
+
+  </a-scene>
+</body>
+</html>
