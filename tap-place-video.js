@@ -59,6 +59,9 @@
 
     var root = sceneEl.object3D;
 
+    // 정리 전에 먼저 스케일 저장
+    var keepScale = currentGroup ? currentGroup.scale.x : 1;
+
     // 기존 오브젝트 정리
     if (currentGroup) {
       root.remove(currentGroup);
@@ -80,12 +83,7 @@
       new THREE.PlaneGeometry(pw, ph),
       makeChromakeyMaterial()
     );
-    // 메시 중심을 위로 올려 하단이 그룹 원점(바닥)에 오도록
-    // → 핀치로 스케일 키워도 하단은 바닥에 고정, 위로만 늘어남
     mesh.position.y = ph / 2;
-
-    // 이전 스케일 유지 (핀치로 키운 크기 그대로)
-    var keepScale = currentGroup ? currentGroup.scale.x : 1;
 
     currentGroup = new THREE.Group();
     currentGroup.position.set(hitPos.x, hitPos.y + 0.02, hitPos.z);
