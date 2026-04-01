@@ -76,7 +76,7 @@
       currentGroup = null;
     }
 
-    var pw = 2.5;
+    var pw = 8;
     var ph = pw * (12 / 16);
 
     var mesh = new THREE.Mesh(
@@ -127,7 +127,7 @@
   }
   function onTouchMove(e) {
     if (!pinchActive || e.touches.length < 2 || !currentGroup) return;
-    var s = Math.max(0.1, Math.min(10, initialScale * dist2(e.touches) / initialPinchDist));
+    var s = Math.max(0.1, Math.min(100, initialScale * dist2(e.touches) / initialPinchDist));
     currentGroup.scale.set(s, s, s);
   }
   function onTouchEnd(e) {
